@@ -394,6 +394,12 @@ async def report(bot, alert, source=None, ctx=None):
         The context object of the message which triggered the flag
     """
     error_embed = Embed()
+
+    # Error message (exception + stacktrace)
+    error_message = traceback.format_exc(limit=5)
+    error_message = "```" + trimtolength(error_message, 2042) + "```"
+    error_embed.description = error_message
+
     if ctx is None:
         error_embed.title = "Alert"
         error_embed.colour = EMBED_COLORS["error"]
@@ -416,11 +422,6 @@ async def report(bot, alert, source=None, ctx=None):
     if source is not None:
         error_embed.add_field(name="Source", value=source, inline=False)
     error_embed.add_field(name="Message", value=ctx.message.content, inline=False)
-
-    # Error message (exception + stacktrace)
-    error_message = traceback.format_exc(limit=5)
-    error_message = "```" + trimtolength(error_message, 2042) + "```"
-    error_embed.description = error_message
 
     await bot.send_message(bot.ERROR_CHANNEL, embed=error_embed)
 

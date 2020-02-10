@@ -10,6 +10,7 @@ import sys
 # ----------- Custom imports
 import credentials
 import embedGenerator
+from embed_generator import AmazonEmbedGenerator
 from scheduler import Scheduler
 from dbconnection import DBConnection
 from constants import *
@@ -388,11 +389,19 @@ async def on_message(message):
                                 # (bot.regex.find_twitter_handle, embedGenerator.twitter_handle),  # Twitter handles
                                 # (bot.regex.find_twitter_id, embedGenerator.twitter_images),  # Images from tweets
                                 (bot.regex.find_twitter_id, embedGenerator.twitter_response),  # Response to tweets
-                                (bot.regex.find_amazon, embedGenerator.amazon),  # Amazon links
                                 (bot.regex.find_newegg, embedGenerator.newegg)]  # Newegg links
 
             for (regex, generator) in generator_fodder:
                 for embed in await embedGenerator.embeds_from_regex(regex(content), generator, message):
+                    unfurl_message = await bot.send_message(message.channel, embed=embed)
+                    await embedGenerator.record_unfurl(message, unfurl_message)
+                    await bot.add_reaction(unfurl_message, DELETE_EMOJI)
+
+            # Example using EmbedGenerator sub classes.
+            supported_generators = [AmazonEmbedGenerator]
+            for gen in supported_generators:
+                g = gen(message)
+                for embed in await g.get_embeds():
                     unfurl_message = await bot.send_message(message.channel, embed=embed)
                     await embedGenerator.record_unfurl(message, unfurl_message)
                     await bot.add_reaction(unfurl_message, DELETE_EMOJI)
